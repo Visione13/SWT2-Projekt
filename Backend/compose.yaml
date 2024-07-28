@@ -1,0 +1,42 @@
+services:
+  datacruncher:
+    build:
+      context: .
+    container_name: frodo_datacruncher
+    ports:
+      - 8080:8080
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/frodo_logging_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  db:
+    image: mysql:latest
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: frodo_logging_db
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+#  broker:
+#    image: jonathan061/frodo_msg_broker
+#    ports:
+#      - "1883:1883"
+#      - "9001:9001"
+#    container_name: frodo_broker
+#    restart: unless-stopped
+
+volumes:
+  db_data:
